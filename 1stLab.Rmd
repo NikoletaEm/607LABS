@@ -6,29 +6,30 @@ output:
   pdf_document: default
   html_document: default
 ---
-#Loading the dataset
-##First Step.
-###We load the dataset and read the .csv file.The FiveThirtyEight article "You Can't Trust What You Read About Nutrition" delves into the challenges of obtaining reliable nutritional information. It discusses how various entities offer conflicting dietary advice based on different perspectives, resulting in a lack of consensus on what constitutes a healthy diet.The full article is avalaible here https://fivethirtyeight.com/features/you-cant-trust-what-you-read-about-nutrition/. The original data file is available here https://github.com/NikoletaEm/607LABS/blob/ee8e0eb2fb25b36a28daa4684d3685a02982cd29/raw_anonymized_data.csv
+
+# **Loading the dataset**
+
+## First Step.
+
+### We load the dataset and read the .csv file.The FiveThirtyEight article "You Can't Trust What You Read About Nutrition" delves into the challenges of obtaining reliable nutritional information. It discusses how various entities offer conflicting dietary advice based on different perspectives, resulting in a lack of consensus on what constitutes a healthy diet.The full article is avalaible here https://fivethirtyeight.com/features/you-cant-trust-what-you-read-about-nutrition/. The original data file is available here https://github.com/NikoletaEm/607LABS/blob/ee8e0eb2fb25b36a28daa4684d3685a02982cd29/raw_anonymized_data.csv
+
 ```{r}
+
 library(tidyverse)
 data<-read_csv("raw_anonymized_data.csv")
-
 ```
-#Rearanging the coloums
-##Second step.
-###I removed most of the columns they were 1093 in total and I kept only 6. 
+# **Rearanging the coloums**
+## Second step.
+### I removed most of the columns they were 1093 in total and I kept only 6. 
 ```{r}
 data_new0<-data[,-8:-1093]
 data_new<-data_new0[,-5]
 ```
-#GRAPHS
-##Third Step.
-###We start by installing the appropriate packages and libraries in order to creat the bar charts.We the help of the following bar charts we can easily observe that ,according to our data, the majority of people doesn't smoke currently or ever,doesn't have heart issues but has cancer.
-```{r graph}
-install.packages("ggplot")
-library(ggplot2)
+# **GRAPHS**
+## Third Step.
+### We start by installing the appropriate packages and libraries in order to creat the bar charts.We the help of the following bar charts we can easily observe that ,according to our data, the majority of people doesn't smoke currently or ever,doesn't have heart issues but has cancer.
 
-```
+
 ```{r}
 ggplot(data=data_new,aes(x=cancer))+geom_bar(fill="pink")
 ggplot(data=data_new,aes(x=currently_smoke))+geom_bar(fill='green')
@@ -36,5 +37,6 @@ ggplot(data=data_new,aes(x=ever_smoked))+geom_bar(fill='blue')
 ggplot(data=data_new,aes(x=heart_disease))+geom_bar(fill='orange')
 
 ```
-#Conclusion
-###However the findings of the survey may be odd or even surprising, we must take into serious consideration that the sample (54 people) was very small so the findings may not actually be valid.A bigger sample including a variety of people with different eating habits would have more possibly significant findings.
+
+# **Conclusion**
+### However the findings of the survey may be odd or even surprising, we must take into serious consideration that the sample (54 people) was very small so the findings may not actually be valid.A bigger sample including a variety of people with different eating habits would have more possibly significant findings.

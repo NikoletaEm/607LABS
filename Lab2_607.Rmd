@@ -1,0 +1,55 @@
+---
+title: "practice"
+author: "nikol"
+date: "2024-02-03"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+````
+
+
+```{r}
+installed.packages('tidyr')
+```
+```{r}
+## I exported the database from MySQL using Table Export Wizzard, exporting into a csv file, which I imported in Rstudio using the following commands.
+```
+```{r}
+data<-read.csv('pop_movies.csv')
+inits <- c("G.P", "A.P", "K.E", "N.E","A.P","P.X")
+Barbie<- c(3,4,5,0,2,4)
+Wonka <- c(0, 4, 5,0,1,1)
+Poor_things<-c(1,0,0,5,4,0)
+Saltburn<- c(1,2,0,5,0,3)
+Anyone_but_You<-c(0,5,4,1,5,5)
+The_beekeeper<-c(5,0,2,3,0,1)
+dataf<- data.frame(Initials=inits, Barbie = Barbie, Wonka=Wonka,
+Poor_things=Poor_things,Saltburn=Saltburn,Anyone_but_you=Anyone_but_You,The_beekeeper=The_beekeeper)
+View(dataf)
+## We have succesfully made the dataframe we wanted including the data imported from MySQL
+```
+```{r}
+zero_counts <- colSums(dataf== 0)
+print(zero_counts)
+## Zeros represent the movies that were uknown to the partcipants of the survey or they haven't seen them.
+## As we observe the results, Poor_things the oscar winning movie has the biggest number of 0s, meaning that
+## the participants were uninterested in watching it or never heard of it. 
+```
+```{r}
+
+library(reshape2)
+Reshapedata <-melt(dataf, id.vars = c("Initials"))
+names(Reshapedata)[2:3]<- c("Movie", "Rate")
+Reshapedata$Rate<-as.numeric(Reshapedata$Rate)
+```
+```{r}
+DataCleaned <- Reshapedata[!(Reshapedata$Rate== 0), ]
+## We removed the rows that included a 0 aka our missind data!
+```
+```{r}
+ggplot(data=DataCleaned, aes(x=Movie, y = Rate, fill = Movie, label = Rate))+
+    geom_bar(stat="identity")+ggtitle("Popular Movies Rated")
+## According to the following plot the movie with the highest overall ratings in Anyone but you (a romantic comedy),
+```
