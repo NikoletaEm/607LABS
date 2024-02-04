@@ -14,10 +14,10 @@ knitr::opts_chunk$set(echo = TRUE)
 installed.packages('tidyr')
 ```
 ```{r}
-## I exported the database from MySQL using Table Export Wizzard, exporting into a csv file, which I imported in Rstudio using the following commands.
+## I exported the database from MySQL using Table Export Wizzard, exporting into a csv file, which I imported in Rstudio using the following commands.(+Uploaded the csv file on Github)
 ```
 ```{r}
-data<-read.csv('pop_movies.csv')
+data<-read.csv('https://github.com/NikoletaEm/607LABS/blob/main/pop_movies.csv')
 inits <- c("G.P", "A.P", "K.E", "N.E","A.P","P.X")
 Barbie<- c(3,4,5,0,2,4)
 Wonka <- c(0, 4, 5,0,1,1)
@@ -43,9 +43,11 @@ library(reshape2)
 Reshapedata <-melt(dataf, id.vars = c("Initials"))
 names(Reshapedata)[2:3]<- c("Movie", "Rate")
 Reshapedata$Rate<-as.numeric(Reshapedata$Rate)
+View(Reshapedata)
 ```
 ```{r}
 DataCleaned <- Reshapedata[!(Reshapedata$Rate== 0), ]
+View(DataCleaned)
 ## We removed the rows that included a 0 aka our missind data!
 ```
 ```{r}
