@@ -1,0 +1,114 @@
+---
+title: "Lab 3"
+author: "Nikoleta Emanouilidi"
+date: "2024-02-07"
+output:
+  html_document:
+    df_print: paged
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# *LAB 3*
+
+
+```{r}
+library(tidyverse)
+library(readr)
+library(stringr)
+```
+
+
+## **1. Using the 173 majors listed in fivethirtyeight.com’s College Majors dataset [https://fivethirtyeight.com/features/the-economic-guide-to-picking-a-college-major/], provide code that identifies the majors that contain either "DATA" or "STATISTICS"**
+
+## First of all we read the data using the following command
+``` {r} 
+data<-read.csv("majors-list.csv")
+```
+
+
+## We use this command to find the majors that contain the word "Statitics".The ignore_case=TRUE is used  because it allows characters to match either their uppercase or lowercase forms.
+```{r}
+Majors_STATISTICS<-str_view(data$Major, regex("Statistics", ignore_case = TRUE))
+## Same as above with the word "Data"
+Majors_DATA<-str_view(data$Major, regex("Data", ignore_case = TRUE))
+```
+## We actually could have used one line of code to find the answers above and that would be: str_view(data$Major, regex("Statistics|Data", ignore_case = TRUE)).We get 3 majors in total, 2 of them contain the word statistics and only 1 contains the word data!
+
+
+## **2.Write code that transforms the data below:**
+## [1] "bell pepper"  "bilberry"     "blackberry"   "blood orange"
+## [5] "blueberry"    "cantaloupe"   "chili pepper" "cloudberry"  
+## [9] "elderberry"   "lime"         "lychee"       "mulberry"    
+## [13] "olive"        "salal berry"
+## Into a format like this:
+## c("bell pepper", "bilberry", "blackberry", "blood orange", "blueberry", "cantaloupe", "chili pepper", "cloudberry", "elderberry", "lime", "lychee", "mulberry", "olive", "salal berry")
+```{r}
+dataS<-c(' "bell pepper"  "bilberry"     "blackberry"   "blood orange"
+  "blueberry"    "cantaloupe"   "chili pepper" "cloudberry"  
+  "elderberry"   "lime"         "lychee"       "mulberry"    
+  "olive"        "salal berry" ')
+Cleaned_data<-str_replace_all(dataS,"[\\d+]",' ') ## I remove all the numbers in the brackets
+Cleaned_data<- str_replace_all(Cleaned_data,"\\s+", ", ") ## I replaced the spaces with commas
+Cleaned_data <- str_replace_all(Cleaned_data, "(bell|chili|salal),\\s*", "\\1 ") ## I removed the comma from in between bell pepper , chili pepper and salal berry
+Cleaned_data<- str_remove(Cleaned_data, "^,") ## I removed the comma from the start
+Final_string <- paste0('c(', Cleaned_data, ')') ## Added the c()
+Final_string<- str_replace(Final_string,",\\s*\\)", ")") ## Removed a comma appearing in the end after salal berry
+cat(Final_string,"\n") ## Printed without backlashes
+```
+
+
+## **3. Describe, in words, what these expressions will match:**
+
+## **(.)\1\1** -> This matches any sequence of three consecutive identical characters.
+```{r}
+str <- "abbbccddeeefff"
+result <- str_extract_all(str, regex('(.)\\1\\1'))
+print(result)
+```
+## **"(.)(.)\\2\\1"** ->It matches characters where the first and last characters are the same, and the second and third characters are also the same but in reverse order. It is clearer with an example.
+```{r}
+str2 <- "abba 123321 xyzx"
+result2 <- str_extract_all(str2, regex("(.)(.)\\2\\1"))
+print(result2)
+```
+## **(..)\1** ->This matches any four-character string where the first two characters are the same as the last two characters.
+```{r}
+str3<-"abab 1212 xxyx"
+result3<-str_extract_all(str3,"(..)\\1")
+print(result3)
+```
+## **"(.).\\1.\\1"** ->This matches a string where there is 1 character repeating 3 times with letters in between them.
+```{r}
+str4<- "akala 12131 121"
+result4<-str_extract_all(str4,regex("(.).\\1.\\1"))
+print(result4)
+```
+## **"(.)(.)(.).*\\3\\2\\1"** -> This matches the first 3 characters of a string which are the same with the last 3 characters reversed and the sequence is interupted by other characters
+```{r}
+str5<-"123546321 abczecba"
+result5<-str_extract_all(str5,"(.)(.)(.).*\\3\\2\\1")
+print(result5)
+```
+
+## **4. Construct regular expressions to match words that:**
+## **Start and end with the same character.** ->"^(.).*\\1$"
+```{r}
+ex1<-c("aba","ana","brb","123")
+result_1<-str_extract_all(ex1,"^(.).*\\1$")
+print(result_1)
+```
+## **Contain a repeated pair of letters (e.g. "church" contains "ch" repeated twice.)** ->"(\\w{2}).*\\1"
+```{r}
+ex2<-c("church","bbacbb","1234")
+result_2<-str_extract_all(ex2,"(\\w{2}).*\\1")
+print(result_2)
+```
+## **Contain one letter repeated in at least three places (e.g. "eleven" contains three "e"s.)** ->"(\\w)\\w*\\1\\w*\\1\\w*")
+```{r}
+ex3<-c("eleven","success")
+result_3<-str_extract_all(ex3,"(\\w)\\w*\\1\\w*\\1\\w*")
+print(result_3)
+```
