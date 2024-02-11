@@ -1,0 +1,121 @@
+---
+title: "Untitled"
+author: "nikol"
+date: "2024-02-11"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+```{r}
+library(readr)
+library(ggplot2)
+library(stringr)
+penguins_pred<-read.csv("penguin_predictions.csv")
+```
+### TP= "True Positive" -> A predicted positive is an actual positive
+### TN= "True Negative" -> A predicted negative is an actual negative
+### FP= "False Positive"-> A predicted positive is an actual negative
+### FN= "False Negative"-> A predicted negative is an actual positive
+
+## **Calculate and state the null error rate for the provided classification_model_performance.csv dataset. Create a plot showing the data distribution of the actual explanatory variable. Explain why always knowing the null error rate (or majority class percent) matters.**
+
+### We will categorize the data in order to figure out the number of True Positives meaning the predicted females being actually females, the number of True Negatives->the predicted males being actually males, the number of False Positives->the predicted females being actually males and the number of False Negatives->the predicted males being actually females.
+```{r}
+Grouped_data<-penguins_pred |>
+  group_by(.pred_class, sex) |>
+  count()
+```
+### First of all,the null error rate is the accuracy that could be achieved by always guessing the majority class. It represents the proportion of the majority class in the dataset.In order to calculate the Null Error Rate we need to figure out which is the majority class!As we can observe from the Grouped_data dataframe we created, the total number of female penguins is 36+3=39 and the total number of males is 51+3=54.It is therefore very clear that the majority class is males!Let's create the plot for the actual explanatory variable aka the sex.
+```{r}
+ggplot(penguins_pred, aes(x = sex, fill = sex)) +
+  geom_bar(color = "black",fill = c("lightpink", "darkblue")) +
+  labs(title = "Distribution of Actual Explanatory Variable",
+       x = "Sex",
+       y = "Count")
+```
+### Now let's calculate the Null Error Rate. The formula for the NER is 1 minus the  of the majority class. 
+```{r}
+prop_MajClass<- 54/93
+NER<- 1-prop_MajClass
+print(NER)
+```
+### So, the Null Error Rate is 0.4 or 40%. 
+### Knowing the null error rate, or the majority class percentage, is essential for understanding how well a classification model performs compared to a simple baseline.It also guides decision-making by providing insights into the practical significance of the model's predictions.
+
+## **Analyze the data to determine the true positive, false positive, true negative, and false negative values for the dataset, using .pred_female thresholds of 0.2, 0.5, and 0.8. Display your results in three confusion matrices, with the counts of TP,FP, TN, and FN. You may code your confusion matrix “by hand” (encouraged!),but full credit if you use “pre-packaged methods” here.**
+
+### We will use the ifelse() function.We use the ifelse() function to assign values to the new column .pred_class.2 based on a condition.If the value in the .pred_female column is more than 0.2, it means the model predicts that the observation is more likely to be female. So, in the new column .pred_class.2, the corresponding value is set as "female".If the value in the .pred_female column is 0.2 or less, it means the model predicts that the observation is more likely to be male. So, in the new column .pred_class.2, the corresponding value is set as "male".We will repeat the same process for the other 2 thresholds.
+```{r}
+penguins_pred <- penguins_pred |>
+  mutate(.pred_class.0.2 = ifelse(.pred_female > 0.2, "female", "male"))
+```
+```{r}
+penguins_pred <- penguins_pred |>
+  mutate(.pred_class.0.5 = ifelse(.pred_female > 0.5, "female", "male"))|>
+  mutate(.pred_class.0.8=ifelse(.pred_female>0.8,"female","male"))
+```
+```{r}
+confusion_matrix_0.2 <- table(Actual = penguins_pred$sex, Predicted =penguins_pred$.pred_class.0.2, exclude = NULL)
+confusion_matrix_0.5 <- table(Actual = penguins_pred$sex, Predicted =penguins_pred$.pred_class.0.5, exclude = NULL)
+confusion_matrix_0.8 <- table(Actual = penguins_pred$sex, Predicted =penguins_pred$.pred_class.0.8, exclude = NULL)
+print(confusion_matrix_0.2)
+print(confusion_matrix_0.5)
+print(confusion_matrix_0.8)
+```
+### We created the matrixes with the TF,TN,FN,FP values on them!
+
+## **Create a table showing—for each of the three thresholds—the accuracy,precision, recall, and F1 scores.**
+### To begin with, accuracy is the proportion of correctly classified samples among the total samples.Precision is the proportion of true positive predictions among all positive predictions.Recall is the proportion of true positive predictions among all actual positive samples.F1 Score is the harmonic mean of precision and recall. It provides a balance between precision and recall.We will extract the information we need from the previous exercise and more specifically from the confusion matrixes.
+```{r}
+#For .pred_class.0.2
+TP1<-37
+FP1<-6
+TN1<-48
+FN1<-2
+#For .pred_class.0.5
+TP2<-36
+FP2<-3
+TN2<-51
+FN2<-3
+#For .pred_class.0.8
+TP3<-36
+FP3<-2
+TN3<-52
+FN3<-3
+```
+### Now we calculate
+```{r}
+accuracy1 = (TP1 + TN1) / (TP1 + TN1 + FP1 + FN1)
+precision1 = TP1 / (TP1 + FP1)
+recall1 = TP1 / (TP1 + FN1)
+f1_score1 = 2 * (precision1 * recall1) / (precision1 + recall1)
+metrics1 <- data.frame(
+  Metric = c("Accuracy", "Precision", "Recall", "F1 Score"),
+  Value = c(accuracy1, precision1, recall1, f1_score1))
+print(metrics1)
+
+accuracy2 = (TP2 + TN2) / (TP2+ TN2 + FP2 + FN2)
+precision2 = TP2 / (TP2 + FP2)
+recall2 = TP2 / (TP2 + FN2)
+f1_score2 = 2 * (precision2 * recall2) / (precision2 + recall2)
+metrics2 <- data.frame(
+  Metric = c("Accuracy", "Precision", "Recall", "F1 Score"),
+  Value = c(accuracy2, precision2, recall2, f1_score2))
+print(metrics2)
+
+accuracy3 = (TP3 + TN3) / (TP3+ TN3 + FP3 + FN3)
+precision3 = TP3 / (TP3 + FP3)
+recall3 = TP3 / (TP3 + FN3)
+f1_score3 = 2 * (precision3 * recall3) / (precision3 + recall3)
+metrics3 <- data.frame(
+  Metric = c("Accuracy", "Precision", "Recall", "F1 Score"),
+  Value = c(accuracy3, precision3, recall3, f1_score3))
+print(metrics3)
+```
+
+## **Provide at least one example use case where (a) an 0.2 scored probabilitythreshold would be preferable, and (b) an 0.8 scored probability threshold would be preferable.**
+
+### a) One example use case where a 0.2 scored probability threshold would be preferable is in credit risk assessment for loan approval.A threshold of 0.2 means that applicants with a probability score of 0.2 or higher are marked as "high risk" and may therefore be denied a loan, while those below 0.2 are marked as "low risk" and may be approved for a loan.
+### b)A machine is used to predict whether a patient has a rare and highly contagious disease. The consequences of a false positive could be severe.In that case, precision is  very important to minimize false positives. This high threshold (0.8) ensures that the model is more conservative in its predictions, resulting in a higher precision as it is less likely to incorrectly classify healthy patients as positive.
