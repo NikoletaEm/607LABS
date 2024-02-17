@@ -1,0 +1,122 @@
+---
+title: "Data 607 Project 1"
+author: "Nikoleta Emanouilidi"
+date: "2024-02-14"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+library(dplyr)
+library(readr)
+library(tidyr)
+library(stringr)
+library(ggplot2)
+```
+
+### We start by reading the raw data file after I uploaded it in Github.
+```{r}
+Raw_data <-readLines("https://raw.githubusercontent.com/NikoletaEm/607LABS/main/tournamentinfo.txt" )
+head(Raw_data)
+tail(Raw_data)
+```
+
+### Our data in the format it is, is actually very difficult to read and interpret. We need to make some ajustments to it.First of all,the '|' character is  used as a delimiter or separator in our data to mark the boundaries between the different columns.By finding the positions of '|' characters in the fifth column, the code is likely trying to understand the structure of the data and extract relevant information from it.
+```{r}
+P0 = 0
+P1 = unname(str_locate_all(pattern = '\\|', Raw_data[5])[[1]][1,1])#we found the position of the first '|' character in the fifth column of Raw_data and stored that position in the variable x1
+P2 = unname(str_locate_all(pattern = '\\|', Raw_data[5])[[1]][2,1]) ## Similar to the previous line, but we found the position of the second '|' character in the fifth column and stored that position in the variable x2
+P3 = unname(str_locate_all(pattern = '\\|', Raw_data[5])[[1]][3,1])
+```
+### Our aim now is to keep only the important data like names,numbers, state etc and get rid of the dotted lines.
+```{r}
+group_1 = Raw_data[seq(5, 196,3)]
+group_2 = Raw_data[seq(6, 196, 3)]   
+head(group_1)
+head(group_2)
+```
+### We succesfully managed (after many failed attempts) to remove all the dotted/underscored lines from our data frame and also grouped our data in 2 groups.We did that beacause If we try to put them in 1 group it makes it very difficult to us to categorize and summarize our data.
+
+## Let's tidy up the names of the players first.We want both the "|" and the spaces/tabs removed.
+```{r}
+name = substr(group_1, P1+1, P2-2) ## if we wrote (group1, P1, P2) we would include the "|" both before the names and also after
+Players_names = gsub("^\\s+|\\s+$", "", name)
+head(Players_names)
+```
+### Let's tidy up the states using the same technique.This process is a bit timeconsuming but I couldn't figure out anything else.
+```{r}
+state = substr(group_2, P0, P1-1) ## Again if we wrote (group2, P0, P1) or (group2, P0, P1+1) it'd keep the "|" at the end of each state. We didn't guess the P1-1 we try different things and see which gives the desired result.
+States = gsub("^\\s+|\\s+$", "", state)
+head(States)
+```
+### Next is the Total_Pts
+```{r}
+total_points = substr(group_1, P2 + 1, P3 - 1) ## Same thing as above we need to get rid off "|"
+Total_Pts = gsub("^\\s+|\\s+$", "", total_points)
+head(Total_Pts)
+```
+### Now we move on to Group 2 to tidy up some of the data there as well
+### Let's start by tidying up the players pre-rating.
+```{r}
+Pre_Rate = substr(group_2, P1 + 1, P2 - 1)
+Players_PreRate =gsub(".*:(\\s*\\d{2,}).*", "\\1", Pre_Rate) ## Removed all the /,R,:,->.Basically kept only the numbers.
+head(Players_PreRate)
+```
+### Now that the data is tidied up,cleaned and easy to read, we need to place it in a new data frame.
+```{r}
+Project1 = data.frame(Players_names, States,Total_Pts,Players_PreRate)
+View(Project1)
+```
+### Now lets make a function that calculates the Average Pre Chess Rating of Opponents
+```{r}
+size= max(nchar(Raw_data)) ##By finding the maximum number of characters in any cell, the code can determine the width of the table or the maximum length of content in the Raw_Data.We are doing that in order to ensure that all data is displayed properly.
+Opponents = substr(group_1, P3 + 1, size) ## We will opponent information from the group1
+opp = str_extract_all(Opponents, '\\b\\d{1,}') ## We will extract all numeric values from the Opponents variable, which contains opponent IDs for each player.
+opp = as.matrix(opp) ## We will extract opponent IDs into a matrix format, which will need for later.
+
+avgoppprerate <- function(y, z) {
+  x <- y[z]
+  rates <- numeric(length(x))
+  
+  for (i in seq_along(x)) {
+    rate <- 0
+    c <- 0
+    for (b in x[[i]]) {
+      if (!is.na(b)) {
+        c <- c + 1
+        rate <- rate + as.numeric(Project1$Players_PreRate[as.numeric(b)]) ## the class of Players_PreRate is char so I had to change it to numeric
+      } else {
+        cat("Encountered NA in opponent ID for player", i, "\n")
+      }
+    }
+    if (c > 0) {
+      rates[i] <- round(rate / c)
+    } else {
+      cat("No valid opponent IDs found for player", i, "\n")
+      rates[i] <- NA
+    }
+  }
+  
+  return(rates)
+}
+
+Project1$AvgOppPreRating = apply(opp, 1, avgoppprerate)  
+View(Project1)
+```
+### And here's a plot showing the total points of the players grouped by the States
+```{r}
+ggplot(Project1,aes(x=Total_Pts,fill=States))+geom_bar()+facet_wrap(~States)
+```
+
+```{r}
+write.csv(Project1,"chess_tournamentinfo.csv")
+```
+
+### Let's read the csv version we created! (just to be 100% sure everything is ok)
+```{r}
+test<-read.csv("https://raw.githubusercontent.com/NikoletaEm/607LABS/main/chess_tournamentinfo.csv")
+View(test)
+```
