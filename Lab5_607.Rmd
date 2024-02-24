@@ -1,0 +1,103 @@
+---
+title: "Week 5 Data 607"
+author: "Nikoleta Emanouilidi"
+date: "2024-02-20"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+```{r}
+library(tidyverse)
+library(readr)
+library(tidyr)
+library(dplyr)
+library(ggplot2)
+```
+
+## **Load the untidy data**
+
+### First, I am going to load the csv I created which cointains the untidy dataframe I created! I uploaded the csv on Github so it would be reproducible.
+
+```{r}
+flights <- read.csv("https://raw.githubusercontent.com/NikoletaEm/607LABS/main/Flight_data")
+View(flights)
+```
+
+### As you can see it looks messy, having all those empty cells and the names being messed up. I am going to tidy it. Let's start by renaming the columns so it looks more neat.
+
+## Tidy up Proccess: **Rename Columns**
+```{r}
+flights <- flights %>%
+  rename(
+    Airline_Company="x",
+    Arrival_Status="y",
+    Los_Angeles = "Los.Angeles",
+    Phoenix = "Phoenix",
+    San_Diego = "San.Diego",
+    San_Francisco = "San.Francisco",
+    Seattle = "Seattle"
+  )
+```
+
+### Now that we're done with that let's remove the empty row and then somehow fix the empty cells.
+
+## Tidy up Proccess: **Handling missing/empty data**
+```{r}
+flights <- flights[-3, ] ## I removed the 3rd row because it was empty.
+```
+```{r}
+flights <- flights %>%
+  mutate_all(~ ifelse(trimws(.) == "", NA, .))
+flights <- flights %>%
+  fill(Airline_Company, .direction = "down")
+head(flights)
+###This code takes care of managing any missing or empty values in the flight_data dataframe. It ensures that wherever there are missing values, they are replaced with NA to maintain data integrity. Additionally, in the 'Airline_Company' column, any missing values are filled downwards with the most recent non-missing value. This process ensures that each entry has a valid value.
+```
+
+### *Tada!* Now we both got rid off the empty row and filled the cells containing missing data.Now let's make our data into a longer format as it is now  displayed in a wider format.
+
+## Tidy up Proccess: **Longer Format**
+```{r}
+tidy_flights <- flights %>% 
+  pivot_longer(cols= !c("Airline_Company", "Arrival_Status"),
+    names_to="Destination",
+    values_to="Count"
+  )
+head(tidy_flights)
+```
+
+### We made our data format longer using the pivot_longer command. We did it ! We tidied up our data! Now let's move on to some Analysis.
+
+## **Analysis**
+### We need to analyze the delays of each company for each destination. In order to do that we need to filter our dataframe and keep only the delayed flights. 
+```{r}
+delays <- tidy_flights %>%
+                    filter(tidy_flights$Arrival_Status == "delayed")
+custom_palette <- c(  "#900C3F", "#581845")
+ggplot(delays,aes(x=Destination,y=Count,fill=Airline_Company))+ggtitle("Delay Analysis") + theme(plot.title = element_text(hjust = 0.5))+scale_fill_manual(values = custom_palette)+geom_bar(stat="identity", position="dodge") 
+```
+
+### The plot highlights Am West as the company with the most delays overall, with Phoenix recording the highest number of delays.To provide a more comprehensive comparison and validate our observation, let's examine the percentages of delays for each destination.his will offer deeper insights into the delay patterns and support our initial observation.
+
+##  **Percentages**
+
+### Now we'll create a new dataframe including only vital information: Airline Company, Destinations, and Delay Percentages. These percentages are computed by dividing the number of delays for each destination by the total count of flights for that destination across all airline companies.
+
+```{r}
+Delayed_Flights_Percentage <- tidy_flights %>%
+  group_by(Airline_Company, Destination) |> 
+  mutate(Percent_Delay = Count / sum(Count) * 100) |> 
+  filter(Arrival_Status=="delayed") |> 
+  select(Airline_Company, Destination, Percent_Delay)
+
+
+
+custom_palette2 <- c( "#32CD32", "#FFD700")
+ggplot(Delayed_Flights_Percentage,aes(x=Destination,y=Percent_Delay,fill=Airline_Company))+ggtitle("Percentages of Delays")+theme(plot.title = element_text(hjust = 0.5))+  scale_fill_manual(values = custom_palette2)+geom_bar(stat="identity", position="dodge")+geom_text(aes(label = paste0(round(Percent_Delay), "%")), vjust = -0.5, position =position_dodge(width = 0.9))
+```
+
+##  **Conclusion**
+
+### After examining the plot displaying the percentages of delays, it becomes evident that AM WEST experiences a higher frequency of delays in its scheduled flights compared to ALASKA. Furthermore, the largest number of delays is observed in the cities of San Francisco and Seattle.
