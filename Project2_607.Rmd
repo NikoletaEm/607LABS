@@ -1,0 +1,521 @@
+---
+title: "Project 2 Data 607"
+author: "Nikoleta Emanouilidi"
+date: "2024-02-25"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+# **Dataset 1: FIFA 2021 Data** 
+## **First step.** Load the needed libraries!
+```{r}
+library(tidyr)
+library(dplyr)
+library(ggplot2)
+library(readr)
+```
+## The raw CSV file, in its untidy format, has been successfully uploaded to GitHub. Let's proceed with reading and extracting the data from the repository. 
+```{r}
+fifa_Untidy<-read.csv("https://raw.githubusercontent.com/NikoletaEm/607LABS/main/Project1/fifa21_raw_data.csv")
+head(fifa_Untidy)
+```
+### The dataframe contains extensive player information, including their statistics. However, the variable names are not in the desired format. To begin tidying up the data, we'll rename the columns and remove any columns that do not contain significant data, such as PhotoUrl and PlayerUrl.
+```{r}
+fifa_Untidy <- fifa_Untidy %>% rename(Full_Name=LongName,
+                                      Team=Team...Contract,
+                                      Foot=foot,
+                                      Loan_Date_End=Loan.Date.End,
+                                      Release_Clause=Release.Clause,
+                                      Heading_Accuracy=Heading.Accuracy,
+                                      Short_Passing=Short.Passing,
+                                      FK_Accuracy=FK.Accuracy,
+                                      Long_Passing=Long.Passing,
+                                      Ball_Control=Ball.Control,
+                                      Sprint_Speed=Sprint.Speed,
+                                      Shot_Power=Shot.Power,
+                                      Long_Shots=Long.Shots,
+                                      Standing_Tackle=Standing.Tackle,
+                                      Sliding_Tackle=Sliding.Tackle,
+                                      GK_Diving=GK.Diving,
+                                      GK_Handling=GK.Handling)
+
+```
+```{r}
+Columns_to_remove<- c('photoUrl',"playerUrl")
+fifa_Untidy <- fifa_Untidy %>% select(-any_of(Columns_to_remove))
+```
+### I've carefully curated the dataset, selecting and isolating the data points that are pertinent to my analysis. This process has resulted in the creation of a new, streamlined dataframe, which exclusively contains the information I intend to analyze further.
+```{r}
+selected_Data <- subset(fifa_Untidy, select = c("Full_Name", "Nationality","Team","Attacking","Crossing","Short_Passing","Dribbling","Long_Passing","Shot_Power","Penalties","Foot","Value"))
+selected_Data <- selected_Data %>%
+  pivot_longer(cols=!c("Full_Name","Nationality","Team","Foot","Value"),
+               names_to = "Gameplay_stats",
+               values_to="Count"      )
+```
+## **Analysis**
+### We'll kick off the analysis by identifying the top-performing player in each of the selected Gameplay_stats categories.
+### First up, we'll focus on determining the best dribbler among the players in our dataset.
+```{r}
+dribbling_data <- selected_Data[selected_Data$Gameplay_stats == "Dribbling", ]
+index_max_dribbling <- which.max(dribbling_data$Count)
+player_max_dribbling <- dribbling_data[index_max_dribbling, ]
+print(player_max_dribbling)
+```
+### And of course it's Messi!
+### Next, we'll continue our analysis by identifying the player who has accumulated the highest number of penalties.
+```{r}
+penalties_data <- selected_Data[selected_Data$Gameplay_stats == "Penalties", ]
+max_penalty_index <- which.max(penalties_data$Count)
+player_max_penalty <- penalties_data[max_penalty_index, ]
+print(player_max_penalty)
+```
+### And it's Neymar Jr!
+### Now, let's delve into our analysis further by pinpointing the player with the most formidable shot power
+```{r}
+shot_power_data <- selected_Data[selected_Data$Gameplay_stats == "Shot_Power", ]
+max_shot_power_index <- which.max(shot_power_data$Count)
+player_max_shot_power <- shot_power_data[max_shot_power_index, ]
+print(player_max_shot_power)
+```
+### It's Kolarov!
+### Continuing our analysis, let's repeat the process for evaluating players based on their total passing abilities, comprising both short and long passing, as well as crossing and attacking attributes.
+```{r}
+passing_data <- selected_Data %>%
+  filter(Gameplay_stats %in% c("Short_Passing", "Long_Passing"))
+total_passing <- passing_data %>%
+  group_by(Full_Name, Nationality, Team) %>%
+  summarise(Total_Passing = sum(Count)) %>%
+  arrange(desc(Total_Passing))
+player_max_total_passing <- total_passing[1, ]
+print(player_max_total_passing)
+
+crossing_data <- selected_Data[selected_Data$Gameplay_stats == "Crossing", ]
+max_crossing_count <- max(crossing_data$Count)
+max_crossing_player <- crossing_data[crossing_data$Count == max_crossing_count, ]
+print(max_crossing_player)
+```
+### Let's delve deeper into our analysis to identify the player who exhibits the most attacking prowess.
+```{r}
+attacking_data <- selected_Data[selected_Data$Gameplay_stats == "Attacking", ]
+
+# Find the row with the maximum attacking count
+max_attacking_row <- attacking_data[which.max(attacking_data$Count), ]
+
+# Print the player's name with the maximum attacking count
+print(max_attacking_row)
+```
+### It comes as no surprise to avid football fans that Cristiano Ronaldo emerges as the most attacking player.
+### Now, let's visualize the distribution of right-footed and left-footed players by creating a plot that displays the percentages of each category. This will provide further insight into the composition of footedness among the players in our dataset.
+
+```{r}
+percentage <- prop.table(table(selected_Data$Foot)) * 100
+foot_distribution <- data.frame(
+  Foot = names(percentage),
+  Count = as.numeric(table(selected_Data$Foot)),
+  Percentage = percentage
+)
+ggplot(foot_distribution, aes(x = Foot, y = Count)) +
+  geom_bar(stat = "identity", fill = "orange", color = "black") +  
+  geom_text(aes(label = paste0(sprintf("%.1f", percentage), "%")),
+            vjust = -0.5, size = 4, color = "black") +
+  labs(title = "Distribution of Foot Attribute", x = "Foot", y = "Count")
+```
+
+### A notable observation from our analysis reveals that the majority of players in our dataset,comprising 76.1% of the total, predominantly favor their right foot.
+
+### As a Greek individual, I'm keen to showcase the representation of Greek players in our dataset. Utilizing a bar plot, I'll illustrate the specific values associated with these players, providing a visual depiction of their performance metrics. This personalized approach not only highlights the significance of Greek players within the football community but also offers a unique perspective tailored to my nationality and affinity for Greek football talent.
+
+```{r}
+greece_players <- selected_Data[selected_Data$Nationality == "Greece", ]
+
+# Create a bar plot of wages of players from Greece
+ggplot(greece_players, aes(x = factor(Value))) +
+  geom_bar(fill = "lightblue", color = "black") +
+  labs(title = "Distribution of Values for Players from Greece", x = "Value", y = "Frequency") +
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5))
+
+```
+
+### While the plot is visually appealing, it's important to ensure clarity when interpreting the data. To address this, let's calculate the value with the highest frequency to gain a clearer understanding of the most prevalent metric among the Greek players. This additional step will provide us with a more nuanced perspective on the dataset, allowing for a more informed analysis of the predominant performance metric within this specific subset of players.
+```{r}
+value_frequency <- table(greece_players$Value)
+max_frequency_value <- names(which.max(value_frequency))
+max_frequency_count <- max(value_frequency)
+cat("Value category with the highest frequency:", max_frequency_value, "\n")
+cat("Count:", max_frequency_count, "\n")
+```
+### The significant count of 42 players valued at 6.5 million showcases the depth and breadth of Greek football talent, reflecting the country's enduring legacy in the sport. This robust representation not only underscores the remarkable contributions of Greek players but also highlights the nation's ongoing commitment to excellence on the global football stage. It serves as a testament to the dedication and skill of Greek athletes, further solidifying their presence and impact within the competitive landscape of professional football.
+## **Conclusion**
+### In conclusion, our analysis of the football player dataset has offered valuable insights into player performance and demographics. We identified top-performing players in key gameplay categories like dribbling and shot power, highlighting individual strengths in the sport. Moreover, we observed that most players favor their right foot, indicating a prevalent trait among them.Additionally, we explored the distribution of Greek players and their respective valuations. This examination revealed a significant presence of Greek talent in the dataset, with many players valued at 6.5 million. These findings contribute to a better understanding of the football landscape, showcasing the diversity and impact of players from different backgrounds.
+
+#### ✦•······················•✦•······················•✦✦•······················•✦•······················•✦
+
+# **Dataset 2: Covid 19 data**
+```{r}
+library(tidyr)
+library(dplyr)
+library(ggplot2)
+library(readr)
+```
+
+### **In this dataset I worked together with Markella Giallouris.**
+### In this dataset, we explored the effects of COVID-19 on public health and examined its impact on both vaccinated and unvaccinated individuals. Our target focus in this dataset was to analyze the incidence of cases and fatalities, and pinpoint the periods where these numbers were at their peak. 
+
+### First, we will begin by taking the untidy data, and creating a CSV file using the code below: 
+
+```{r}
+Untidy_Covid19<- read.csv("https://raw.githubusercontent.com/NikoletaEm/607LABS/main/Rates_of_COVID-19_Cases_or_Deaths_by_Age_Group_and_Updated__Bivalent__Booster_Status_20240225.csv")
+```
+### Since our prepared CSV file includes data that is untidy, we will move on to the next step that involves cleaning up the dataframe through renaming and refinding the operations. This dataset comes with predefined columns. For example: we have a column that is titled "mmwr_week". The title "mmwr_week" actually refers to the week within the epidemiologic year being defined as: "202140". The '2021' portion implies the year (2021) and the '40' portion refers to the 40th week of the year. This leaves us in October, 2021. For our analysis, we will select and refine these prenamed columns to extract only the essential information needed to proceed. 
+### Source: https://ibis.doh.nm.gov/resource/MMWRWeekCalendar.html
+
+```{r}
+Tidy_Covid19 <- Untidy_Covid19 %>%
+  mutate(unvaccinated_population = as.character(unvaccinated_population)) %>%
+  pivot_longer(
+    cols = c("age_group", "unvaccinated_population","month"),
+    names_to = "Covid19_stats",
+    values_to = "Counts"
+  )
+```
+### The next step in our analysis is to transition to transforming the data into a longer format. This process involves reshaping the data to achieve a more structured and organized layout that facilitates easier analysis visualizations. By being able to pivot the data into a longer format, we will be able to effectively streamline the information and enhance its interpretability ultimately showcasing our focus on the deaths.
+### In the code below we are focusing specifically on the parts of the dataset that include the outcome counts, the mmwr_week, the stats, values , the unvaccinated outcome and the vaccinated outcome
+
+```{r}
+Tidy_Covid19<- Tidy_Covid19 %>% 
+  select("outcome","mmwr_week","Covid19_stats","Counts","unvaccinated_with_outcome","vaccinated_with_outcome")
+```
+## **Analysis**
+### The following code calculates the percentage of outcomes and generates a dataframe consisting of three key columns to help us with our analysis: "outcome", "count", and "percentage". Each of these elements signifies a distinct aspect of our data structure. The "outcome" column denotes the individuals who contracted the virus and succumbed to it, while the "count" column quantifies the number of people under study. The "percentage" column encapsulates the remaining information derived from the analysis. 
+### Below, we utilize 'ggplot2' to visually represent the 
+
+## Visualizing Data With 'ggplot2'
+
+
+```{r}
+outcome_counts <- Tidy_Covid19 %>%
+  group_by(outcome) %>%
+  summarise(Count = n())
+
+Outcome_counts <- as.data.frame(outcome_counts)
+colnames(Outcome_counts) <- c("Outcome", "Count")
+Outcome_counts$Percentage <- (Outcome_counts$Count / sum(Outcome_counts$Count)) * 100
+                                
+ggplot(Outcome_counts, aes(x = Outcome, y = Count, fill = Outcome)) +
+  geom_bar(stat = "identity",fill="darkred") +
+  geom_text(aes(label = paste0(round(Percentage, 2), "%")), 
+            position = position_stack(vjust = 0.5), 
+            color = "black", size = 4) +
+  labs(x = "Outcome", y = "Count", title = "Counts of Cases and Deaths")  +
+  theme_minimal()
+```
+
+### After creating a fresh dataframe and computing their percentages, it is apparent that the number of cases outweighs the number of deaths. 
+
+
+```{r}
+cases_data <- Tidy_Covid19 %>%
+  filter(outcome == "case")
+
+cases_data$date <- as.Date(paste(substr(cases_data$mmwr_week, 1, 4), "-W", substr(cases_data$mmwr_week, 5, 6), "-1", sep = ""), format = "%Y-W%U-%u")
+
+# Create a time series plot
+ggplot(cases_data, aes(x = date, y = unvaccinated_with_outcome)) +
+  geom_line() +
+  labs(x = "Date", y = "Cases", title = "Time Series of COVID-19 Cases (Unvaccinated)") +
+  theme_minimal()
+```
+
+### In the above codeblock, we extracted the year and week portions of the mmwr_Week column. The objective is to group the data by year, which is indicated by the first four digits that will analyze the trends over time. Subsequently, we combined these components in the "ISO" week/date format: (%Y-W%U-%u) which represents the year, week number and weekday. By using the 'as.Date()' code, I was able to convert this string into a Date object in R. The resulting time series plot illustrates the progression of COVID-19 cases over time, with each data point representing the number of cases that are recorded on a specific date. Notably, there is a surge in cases among unvaccinated individuals during the early half of 2022. To validate our findings, we need to confirm the year with the highest case count.
+
+
+```{r}
+Tidy_Covid19 <- Tidy_Covid19 %>%
+  mutate(year = substr(mmwr_week, 1, 4))
+
+cases_unvaccinated <- Tidy_Covid19 %>%
+  filter(outcome == "case" & unvaccinated_with_outcome > 0) %>%
+  group_by(year) %>%
+  summarise(total_cases = sum(unvaccinated_with_outcome))
+
+max_cases_year_data <- cases_unvaccinated %>%
+  filter(total_cases == max(total_cases))
+
+max_cases_year <- max_cases_year_data %>%
+  pull(year)
+max_cases_number <- max_cases_year_data %>%
+  pull(total_cases)
+
+print(paste("Year with the highest number of cases:", max_cases_year))
+print(paste("Number of cases in the highest year:", max_cases_number))
+```
+### The code above verifies the accuracy of the graph. It confirms that 2022 accurately represented itself as the year with the highest case count. Specifically, the total number of cases recorded for that year amounted to 77,598,648.
+
+```{r}
+deaths_data <- Tidy_Covid19 %>%
+  filter(outcome == "death")
+
+deaths_data$date <- as.Date(paste(substr(deaths_data$mmwr_week, 1, 4), "-W", substr(deaths_data$mmwr_week, 5, 6), "-1", sep = ""), format = "%Y-W%U-%u")
+
+
+ggplot(deaths_data, aes(x = date, y = unvaccinated_with_outcome)) +
+  geom_line() +
+  labs(x = "Date", y = "Deaths", title = "Time Series of COVID-19 Deaths (Unvaccinated)") +
+  theme_minimal()
+
+```
+
+```{r}
+
+deaths_unvaccinated <- Tidy_Covid19 %>%
+  filter(outcome == "death" & unvaccinated_with_outcome > 0) %>%
+  group_by(year) %>%
+  summarise(total_deaths = sum(unvaccinated_with_outcome))
+
+max_deaths_year_data <- deaths_unvaccinated %>%
+  filter(total_deaths == max(total_deaths))
+
+max_deaths_year <- max_deaths_year_data %>%
+  pull(year)
+
+max_deaths_number <- max_deaths_year_data %>%
+  pull(total_deaths)
+
+# Print the results
+print(paste("Year with the highest number of deaths:", max_deaths_year))
+print(paste("Number of deaths in the highest year:", max_deaths_number))
+```
+
+## **Vaccinated Data: Cases**
+
+### Plot
+
+### The following code block generates a plot using data from the 'vaccinated_data' subset of the 'Tidy_Covid19' dataset. This plot aims to illustrate the amount of patients who were vaccinated, but still contracted the COVID-19 virus.
+
+```{r}
+vaccinated_data <- Tidy_Covid19 %>%
+  filter(outcome == "case" & !is.na(vaccinated_with_outcome))
+
+
+vaccinated_data <- vaccinated_data %>%
+  group_by(mmwr_week) %>%
+  summarise(mean_cases = mean(vaccinated_with_outcome, na.rm = TRUE))
+```
+
+## **Creating a Time Series Plot**
+
+```{r}
+ggplot(vaccinated_data, aes(x = mmwr_week, y = mean_cases)) +
+  geom_line(color = "green") +
+  geom_smooth(method = "loess", color = "orange") +
+  labs(x = "Week", y = "Mean Cases", title = "Time Series of COVID-19 Cases (Vaccinated)") +
+  theme_minimal()
+```
+
+### The preceding graph depicts the trends in COVID-19 cases, with emphasis on identifying the peak year (2022) during which positive cases spiked.
+
+```{r}
+cases_vaccinated <- Tidy_Covid19 %>%
+  filter(outcome == "case" & vaccinated_with_outcome > 0)
+
+cases_vaccinated <- cases_vaccinated %>%
+  mutate(year = substr(mmwr_week, 1, 4))
+
+cases_vaccinated_summary <- cases_vaccinated %>%
+  group_by(year) %>%
+  summarise(total_cases = sum(vaccinated_with_outcome))
+
+max_cases_vaccinated_year <- cases_vaccinated_summary %>%
+  filter(total_cases == max(total_cases)) %>%
+  pull(year)
+
+max_cases_vaccinated_number <- max(cases_vaccinated_summary$total_cases)
+
+print(paste("Year with the highest number of cases (vaccinated):", max_cases_vaccinated_year))
+print(paste("Number of cases in the highest year (vaccinated):", max_cases_vaccinated_number))
+```
+
+## **Vaccinated Data**
+```{r}
+deaths_vaccinated_data <- Tidy_Covid19 %>%
+  filter(outcome == "death" & !is.na(vaccinated_with_outcome))
+
+deaths_vaccinated_data <- deaths_vaccinated_data %>%
+  group_by(mmwr_week) %>%
+  summarise(mean_deaths = mean(vaccinated_with_outcome, na.rm = TRUE))
+```
+### The code snippet bellow will generate a plot intended to visualize the data from the 'deaths_vaccinated_data' dataset. This dataset comprises metrics indicating the number of patients who were vaccinated but succumbed to COVID-19.
+
+### Time Series Plot for Deaths in Vaccinated Individuals
+```{r}
+ggplot(deaths_vaccinated_data, aes(x = mmwr_week, y = mean_deaths)) +
+  geom_line(color = "red") +
+  geom_smooth(method = "loess", color = "blue") +
+  labs(x = "Week", y = "Mean Deaths", title = "Time Series of COVID-19 Deaths (Vaccinated)") +
+  theme_minimal()
+```
+
+## Highest Year of Death
+
+```{r}
+deaths_vaccinated <- Tidy_Covid19 %>%
+  filter(outcome == "death" & vaccinated_with_outcome > 0) %>%
+  group_by(year) %>%
+  summarise(total_deaths = sum(vaccinated_with_outcome))
+
+max_deaths_vaccinated_year_data <- deaths_vaccinated %>%
+  filter(total_deaths == max(total_deaths))
+
+max_deaths_vaccinated_year <- max_deaths_vaccinated_year_data %>%
+  pull(year)
+
+max_deaths_vaccinated_number <- max_deaths_vaccinated_year_data %>%
+  pull(total_deaths)
+
+print(paste("Year with the highest number of deaths in vaccinated individuals:", max_deaths_vaccinated_year))
+print(paste("Number of deaths in the highest year in vaccinated individuals:", max_deaths_vaccinated_number))
+```
+
+## **Conclusion**
+### In summary, the code block above calculates the highest number of vaccinated patients who contracted and succumbed to COVID-19. It validates that 2022 accurately records the most precise data, with 246,813 individuals having passed away from the virus. Despite the significant number of deaths, the ratio of cases to deaths indicates a higher survival rate, suggesting the effectiveness that being vaccinated ***does*** protect against severe outcomes. This underscores the importance of vaccination in reducing the overall impact of the virus and increasing the likelihood of survival. 
+
+####       ✦•······················•✦•······················•✦✦•······················•✦•····················
+
+# **Dataset 3 : Marriage data in 2022**
+
+```{r}
+marriage_messy <- read.csv("https://raw.githubusercontent.com/NikoletaEm/607LABS/main/Project1/marriage_2022.csv.csv")
+```
+
+### Before proceeding further, I'll undertake the task of standardizing the column names to align with my desired format. This step is essential for ensuring consistency and clarity throughout the datasets, facilitating easier data analysis and interpretation in accordance with my preferences.
+
+```{r}
+marriage_messy <- marriage_messy %>%
+  rename("Demographics"="Label..Grouping.",
+         "Total"="United.States..Total..Estimate",
+         "Total_margin.of.error"="United.States..Total..Margin.of.Error",
+         "Now_Married"="United.States..Now.married..except.separated...Estimate",
+         "Now_Married_margin.of.error"="United.States..Now.married..except.separated...Margin.of.Error",
+         "Widowed"="United.States..Widowed..Estimate",
+         "Widowed_margin.of.error"='United.States..Widowed..Margin.of.Error',
+         "Divorced"='United.States..Divorced..Estimate',
+         "Divorced_margin.of.error"='United.States..Divorced..Margin.of.Error',
+          "Seperated"= "United.States..Separated..Estimate",
+         "Seperated_margin.of.error"="United.States..Separated..Margin.of.Error",
+         "Never_married"="United.States..Never.married..Estimate",
+         "Never_married_margin.of.error"="United.States..Never.married..Margin.of.Error")
+```
+### I'll create four distinct datasets, each representing a specific demographic category: Males, Females, Race, and Labor Force. This segregation allows for focused analysis within each demographic group, enabling clearer insights into their respective characteristics and trends.
+```{r}
+males_data <- marriage_messy[4:9, ]
+females_data<-marriage_messy[11:16, ]
+race_data <- marriage_messy[19:28, ]
+laborforce_data <- marriage_messy[30:33, ]
+
+males_data_long <- pivot_longer(males_data, cols = c(Now_Married,Widowed, Divorced, Seperated, Never_married),
+                                names_to = "Marital_Status", values_to = "Percentage")
+females_data_long <- pivot_longer(females_data,cols = c(Now_Married,Widowed, Divorced, Seperated, Never_married),
+                                  names_to = "Marital_Status", values_to = "Percentage")
+race_data_long <- pivot_longer(race_data, cols = c(Now_Married,Widowed, Divorced, Seperated, Never_married),
+                                names_to = "Marital_Status", values_to = "Percentage")
+laborforce_data_long <- pivot_longer(laborforce_data, cols = c(Now_Married,Widowed, Divorced, Seperated, Never_married),
+                                names_to = "Marital_Status", values_to = "Percentage")
+```
+## **Analysis**
+### For the next step of our process, we will analyze each dataset we previously created and determine the maximum percentage of each marital status within each demographic group.
+### What we'll in the code blocks following will be to make a new dataset including only the 3 columns we want to analyze and then make a new dataframe including only the max elements for each marital status of each demographic category.
+### We will begin our analysis with the males data. 
+```{r}
+## Males data
+males_data_long$Percentage <- as.numeric(gsub("%", "", males_data_long$Percentage))
+
+Percentages_male <- males_data_long %>%
+  group_by(Demographics, Marital_Status) %>%
+  summarize(Percentages_male  = max(Percentage, na.rm = TRUE), .groups = 'drop')
+
+Males_percentage_rows <- Percentages_male  %>%
+  group_by(Demographics) %>%
+  filter(Percentages_male  == max(Percentages_male ))
+print(Males_percentage_rows)
+## Plot
+ggplot(males_data_long, aes(x = Demographics, y = Percentage, fill = Marital_Status)) +
+  geom_bar(stat = "identity", position = "dodge") +
+  labs(title = "Comparison of Marital Status Among Males by Age Group",
+       x = "Age Group",
+       y = "Percentage") +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
+  scale_fill_manual(values = c("Now_Married"="purple","Widowed" = "blue", "Divorced" = "red", 
+                               "Seperated" = "green", "Never_married" = "orange"),name = "Marital Status")
+```
+
+### The graphical representation above  provides valuable insights into the marital statuses prevalent across various age brackets among males. Notably, a substantial proportion of younger males, aged between 15 to 19 and 20 to 34, are characterized as being unmarried or never married. However, as the age cohorts progress, particularly from the mid-thirties onward, an observable shift occurs, with a predominant majority of males reporting themselves as now married.These observations highlight how people tend to move towards getting married as they grow older.
+### We'll continue our analysis with the female data
+```{r}
+## Females data
+females_data_long$Percentage <- as.numeric(gsub("%", "", females_data_long$Percentage))
+
+Percentages_female <- females_data_long %>%
+  group_by(Demographics, Marital_Status) %>%
+  summarize(Percentages_female = max(Percentage, na.rm = TRUE), .groups = 'drop')
+
+females_percentage_rows <- Percentages_female %>%
+  group_by(Demographics) %>%
+  filter(Percentages_female == max(Percentages_female))
+print(females_percentage_rows)
+## Plot
+ggplot(females_data_long, aes(x = Demographics, y = Percentage, fill = Marital_Status)) +
+  geom_bar(stat = "identity", position = "dodge") +
+  labs(title = "Comparison of Marital Status Among Females by Age Group",
+       x = "Age Group",
+       y = "Percentage") +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
+  scale_fill_manual(values = c("Now_Married"="lightblue","Widowed" = "black", "Divorced" = "maroon", 
+                               "Seperated" = "darkgreen", "Never_married" = "darkred"),name = "Marital Status")
+```
+
+### The findings from the female data mirror those observed in the male data, with a similar pattern evident across most age groups.However, there is a noticeable deviation among females aged 65 years and older.In this specific age group, the percentage of currently married females significantly declines in contrast to their male counterparts.This divergence can be attributed to a notable rise in the percentage of widowed individuals within this demographic, as visually depicted in the graph.
+
+### Next step is to analyze the different races!
+```{r}
+race_data_long$Percentage <- as.numeric(gsub("%", "", race_data_long$Percentage))
+
+Percentages_race <- race_data_long %>%
+  group_by(Demographics, Marital_Status) %>%
+  summarize(Percentages_race = max(Percentage, na.rm = TRUE), .groups = 'drop')
+
+race_percentage_rows <- Percentages_race %>%
+  group_by(Demographics) %>%
+  filter(Percentages_race == max(Percentages_race))
+print(race_percentage_rows)
+```
+### Among individuals of Hispanic or Latino origin (of any race), the maximum percentage who are never married is 43.2%. For those identified as belonging to one race, the highest proportion of individuals who are now married is 48.7%. In the category of two or more races, the maximum percentages of individuals who are never married and now married are both 42.4%. White individuals alone, not Hispanic or Latino, exhibit a maximum percentage of 52.6% who are now married. Among American Indian and Alaska Native individuals, the highest proportion who are never married is 45.3%. Asian individuals display the highest percentage of individuals who are now married at 58.2%. In the category of Black or African American individuals, the maximum percentage who are never married is 49.8%. Among Native Hawaiian and Other Pacific Islander individuals, the highest proportion who are now married is 43.2%. Lastly, for individuals categorized as belonging to some other race, the maximum percentage who are never married is 43.4%. These findings underscore the significant variability in marital status across different racial and ethnic demographics.
+### Next and final step in our analysis is the labor force.
+```{r}
+laborforce_data_long$Percentage <- as.numeric(gsub("%", "", laborforce_data_long$Percentage))
+
+Percentages_laborforce <- laborforce_data_long %>%
+  group_by(Demographics, Marital_Status) %>%
+  summarize(Percentages_laborforce = max(Percentage, na.rm = TRUE), .groups = 'drop')
+
+laborforce_percentage_rows <- Percentages_laborforce %>%
+  group_by(Demographics) %>%
+  filter(Percentages_laborforce == max(Percentages_laborforce))
+print(laborforce_percentage_rows)
+## Plot
+ggplot(laborforce_data_long, aes(x = Demographics, y = Percentage, fill = Marital_Status)) +
+  geom_bar(stat = "identity", position = "dodge") +
+  labs(title = "Labor Force Participation by Marital Status",
+       x = "Demographics",
+       y = "Percentage") +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
+  facet_wrap(~Marital_Status, scales = "free_y")
+```
+
+### As evident from the dataframe provided, the proportion of men engaged in the labor force while also being married surpasses that of women.The plot visualizes labor force participation across different demographic groups, segmented by marital status. Each bar represents the percentage of individuals within a demographic category who fall under a specific marital status. By examining the bars within each demographic group, we can observe the distribution of marital statuses across different segments of the population. This visualization allows for a quick comparison of marital status distribution across various demographic groups, providing insights into how labor force participation varies across different marital statuses within each demographic category.
+
+## **Conclusion**
+
+### In conclusion, the analysis of demographic data, including age, gender, marital status, and race, offers valuable insights into societal trends and disparities. By examining these factors together, we gain a more comprehensive understanding of how various demographic groups experience marriage, labor force participation, and related social dynamics. This integrated approach highlights the interconnectedness of demographics and underscores the importance of considering multiple factors when studying social phenomena.
