@@ -1,0 +1,28 @@
+<?xml version="1.0"?>
+
+<books>
+  <book>
+    <Title>Thomas Calculus</Title>
+    <Author>Joel R. Hass, Christopher E. Heil, Maurice D. Weir</Author>
+    <Cost>95.99</Cost>
+    <Edition>3rd</Edition>
+    <ISBN>978-0137442997</ISBN>
+    <Publication_Year>2021</Publication_Year>
+  </book>
+  <book>
+    <Title>Introduction to Algorithms</Title>
+    <Author>Thomas H. Cormen, Charles E. Leiserson, Ronald L. Rivest, Clifford Stein</Author>
+    <Cost>52.12</Cost>
+    <Edition>3rd</Edition>
+    <ISBN>978-0262033848</ISBN>
+    <Publication_Year>2009</Publication_Year>
+  </book>
+  <book>
+    <Title>Discrete Mathematics and Its Applications</Title>
+    <Author>Kenneth H. Rosen</Author>
+    <Cost>129.15</Cost>
+    <Edition>7th</Edition>
+    <ISBN>978-0073383095</ISBN>
+    <Publication_Year>2011</Publication_Year>
+  </book>
+</books>
