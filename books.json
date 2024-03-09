@@ -1,7 +1,7 @@
 [
     {
         "Title": "Thomas Calculus",
-        "Author": "Joel R. Hass, Christopher E. Heil, Maurice D. Weir",
+        "Author": "Joel R. Hass,Christopher E. Heil,Maurice D. Weir",
         "Cost": 95.99,
         "Edition": "3rd",
         "ISBN": "978-0137442997",
@@ -9,7 +9,7 @@
     },
     {
         "Title": "Introduction to Algorithms",
-        "Author": "Thomas H. Cormen, Charles E. Leiserson, Ronald L. Rivest, Clifford Stein",
+        "Author": "Thomas H. Cormen,Charles E. Leiserson,Ronald L. Rivest,Clifford Stein",
         "Cost": 52.12,
         "Edition": "3rd",
         "ISBN": "978-0262033848",
