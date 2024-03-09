@@ -3,7 +3,7 @@
 <books>
   <book>
     <Title>Thomas Calculus</Title>
-    <Author>Joel R. Hass, Christopher E. Heil, Maurice D. Weir</Author>
+    <Author>Joel R. Hass,Christopher E. Heil,Maurice D. Weir</Author>
     <Cost>95.99</Cost>
     <Edition>3rd</Edition>
     <ISBN>978-0137442997</ISBN>
@@ -11,7 +11,7 @@
   </book>
   <book>
     <Title>Introduction to Algorithms</Title>
-    <Author>Thomas H. Cormen, Charles E. Leiserson, Ronald L. Rivest, Clifford Stein</Author>
+    <Author>Thomas H. Cormen,Charles E. Leiserson,Ronald L. Rivest,Clifford Stein</Author>
     <Cost>52.12</Cost>
     <Edition>3rd</Edition>
     <ISBN>978-0262033848</ISBN>
