@@ -1,0 +1,71 @@
+---
+title: "Week 7 assignment data 607"
+author: "Nikoleta Emanouilidi"
+date: "2024-03-03"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+### Load the needed libraries
+```{r LOADING THE LIBRARIES}
+library(xml2)
+library(jsonlite)
+library(XML)
+```
+## **HTML**
+### You can find the code I used to create the html table in my Github page!
+## There's a link to the code source: https://github.com/NikoletaEm/607LABS/blob/main/books.html
+### Load the html file I created with my favourite books in a dataframe!
+```{r}
+books_html <- readHTMLTable("books.html", stringsAsFactors = FALSE)
+books_html <- books_html[[1]]
+print(books_html)
+```
+## **XML**
+### You can find the link for the code source here: https://github.com/NikoletaEm/607LABS/blob/main/books.xml
+### Load the xml file I created with my favourite books in a dataframe!
+```{r}
+books_xml <- xmlToDataFrame("books.xml")
+print(books_xml)
+```
+## **JSON**
+### You can find the link for the code source here: https://github.com/NikoletaEm/607LABS/blob/main/books.json
+### Load the json file I created with my favourite books in a dataframe!
+```{r}
+books_json <- fromJSON("books.json")
+print(books_json)
+```
+### I will use the identical() function to compare the 3 data frames.Identical() will check if all the  data frames have the same column names, column types, and data values in each cell. If all these conditions are met, identical() will return TRUE, indicating that the data frames are identical. Otherwise, it will return FALSE.
+```{r}
+identical(books_html, books_xml)
+identical(books_html, books_json)
+identical(books_xml, books_json)
+```
+### I'll try to make them identical , but first I need to figure out where the problem is.
+```{r}
+names(books_html)
+names(books_xml)
+names(books_json)
+
+identical(names(books_html), names(books_xml))
+identical(names(books_html), names(books_json))
+
+str(books_html)
+str(books_xml)
+str(books_json) ### The problem is located there. The cost and the publication year in the json dataframe are not characters as the others.Let's change that!
+
+
+```
+### The problem is located in the json dataframe.The cost and the publication year in the json dataframe are not characters as the others.Let's change that!
+```{r}
+books_json$Cost <- as.character(books_json$Cost)
+books_json$Publication_Year <- as.character(books_json$Publication_Year)
+
+identical(books_html, books_xml)
+identical(books_html, books_json)
+identical(books_xml, books_json)
+```
+## **Conclusion**
+### I managed to make 2 dataframes identical to each other but couldn't figure out a way to make the third identical with every dataframe. By the looks of it html maybe has something different compared to the other 2.
