@@ -1,0 +1,58 @@
+---
+title: "Week 9 data 607"
+author: "Nikoleta Emanouilidi"
+date: "2024-03-19"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+### Load the desired libraries.
+
+```{r}
+library(httr)
+library(jsonlite)
+library(tidyverse)
+
+```
+
+### The code below connects to the API.It takes the URL that is used for accessing data from the New York Times Most Popular API and sets a variable called "URL". 
+
+```{r}
+api_key <- "vdXCYZ9JGtiidjpx4FNEcOc5GHVnaJ5l"
+
+URL <- paste0("https://api.nytimes.com/svc/mostpopular/v2/viewed/", 7, ".json") 
+query_params <- list("api-key" = api_key)
+request_url <- modify_url(URL, query = query_params) ### sends the request
+
+response <- GET(request_url) 
+response$status_code ### checks the response
+```
+
+### A response code of 200 means "OK" and it indicates that the request has succeeded.
+
+```{r}
+Articles_untidy <- response$content %>%
+  rawToChar() %>%
+  fromJSON(flatten = TRUE) %>%
+  as.data.frame()
+head(Articles_untidy)
+
+```
+
+### The code above fetches data from the server, converts it from raw format to character format, parses it as JSON data and converts it into a data frame.
+
+```{r}
+Articles_tidy <- Articles_untidy %>% 
+  select(
+    "Published Date" = results.published_date,
+    "Popular Articles" = results.title,
+    "Section" = results.section,
+    "Abstract" = results.abstract
+  )
+View(Articles_tidy)
+```
+
+###  The code above takes the Articles_untidy dataset, selects specific columns and renames them.
