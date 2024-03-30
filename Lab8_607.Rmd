@@ -1,0 +1,266 @@
+---
+title: "Week 10 Data 607"
+author: "Nikoleta Emanouilidi"
+date: "2024-03-27"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+### *Load the libraries*
+```{r}
+### I found the libraries by reading chapter 1
+library(tidyverse)
+library(tidytext)
+library(dplyr)
+library(janeaustenr)
+library(stringr)
+library(ggplot2)
+library(wordcloud)
+library(reshape2)
+```
+
+### **Get sentiments datasets**
+```{r}
+## AFINN
+get_sentiments("afinn")
+```
+```{r}
+### BING
+get_sentiments("bing")
+```
+```{r}
+### NRC
+get_sentiments("nrc")
+```
+
+### *Sentiment analysis with inner join*
+```{r}
+### Tidy the data
+tidy_books <- austen_books() %>%
+  group_by(book) %>%
+  mutate(
+    linenumber = row_number(),
+    chapter = cumsum(str_detect(text, 
+                                regex("^chapter [\\divxlc]", 
+                                      ignore_case = TRUE)))) %>%
+  ungroup() %>%
+  unnest_tokens(word, text)
+
+##sentiment analysis
+
+nrc_joy <- get_sentiments("nrc") %>%
+  filter(sentiment == "joy")
+
+tidy_books %>%
+  filter(book == "Emma") %>%
+  inner_join(nrc_joy) %>%
+  count(word, sort = TRUE)
+
+```
+### *negative and positive sentiments*
+```{r}
+jane_austen_sentiment <- tidy_books %>%
+  inner_join(get_sentiments("bing")) %>%
+  count(book, index = linenumber %/% 80, sentiment) %>%
+  pivot_wider(names_from = sentiment, values_from = n, values_fill = 0) %>% 
+  mutate(sentiment = positive - negative)
+### Plot
+ggplot(jane_austen_sentiment, aes(index, sentiment, fill = book)) +
+  geom_col(show.legend = FALSE) +
+  facet_wrap(~book, ncol = 2, scales = "free_x")
+```
+
+### *Comparing the three sentiment dictionaries*
+
+```{r}
+pride_prejudice <- tidy_books %>% 
+  filter(book == "Pride & Prejudice")
+
+pride_prejudice
+```
+
+```{r}
+afinn <- pride_prejudice %>% 
+  inner_join(get_sentiments("afinn")) %>% 
+  group_by(index = linenumber %/% 80) %>% 
+  summarise(sentiment = sum(value)) %>% 
+  mutate(method = "AFINN")
+```
+```{r}
+bing_and_nrc <- bind_rows(
+  pride_prejudice %>% 
+    inner_join(get_sentiments("bing")) %>%
+    mutate(method = "Bing et al."),
+  pride_prejudice %>% 
+    inner_join(get_sentiments("nrc") %>% 
+                 filter(sentiment %in% c("positive", 
+                                         "negative"))
+    ) %>%
+    mutate(method = "NRC")) %>%
+  count(method, index = linenumber %/% 80, sentiment) %>%
+  pivot_wider(names_from = sentiment,
+              values_from = n,
+              values_fill = 0) %>% 
+  mutate(sentiment = positive - negative)
+
+```
+### Plot
+```{r}
+bind_rows(
+  afinn,
+  bing_and_nrc
+) %>%
+  ggplot(aes(index, sentiment, fill = method)) +
+  geom_col(show.legend = FALSE) +
+  facet_wrap(~method, ncol = 1, scales = "free_y")
+
+```
+
+```{r}
+get_sentiments("nrc") %>% 
+  filter(sentiment %in% c("positive", "negative")) %>% 
+  count(sentiment)
+
+get_sentiments("bing") %>% 
+  count(sentiment)
+```
+
+### *Most common positive and negative words*
+```{r}
+bing_word_counts <- tidy_books %>%
+  inner_join(get_sentiments("bing")) %>%
+  count(word, sentiment, sort = TRUE) %>%
+  ungroup()
+bing_word_counts
+
+bing_word_counts %>%
+  group_by(sentiment) %>%
+  slice_max(n, n = 10) %>% 
+  ungroup() %>%
+  mutate(word = reorder(word, n)) %>%
+  ggplot(aes(n, word, fill = sentiment)) +
+  geom_col(show.legend = FALSE) +
+  facet_wrap(~sentiment, scales = "free_y") +
+  labs(x = "Contribution to sentiment",
+       y = NULL)
+```
+
+### *stop-words*
+```{r}
+custom_stop_words <- bind_rows(tibble(word = c("miss"),  
+                                      lexicon = c("custom")), 
+                               stop_words)
+
+```
+### *wordcloud*
+```{r}
+tidy_books %>%
+  anti_join(stop_words) %>%
+  count(word) %>%
+  with(wordcloud(word, n, max.words = 100))
+
+```
+```{r}
+
+tidy_books %>%
+  inner_join(get_sentiments("bing")) %>%
+  count(word, sentiment, sort = TRUE) %>%
+  acast(word ~ sentiment, value.var = "n", fill = 0) %>%
+  comparison.cloud(colors = c("gray20", "gray80"),
+                   max.words = 100)
+
+```
+
+### *Looking at units beyond just words*
+```{r}
+p_and_p_sentences <- tibble(text = prideprejudice) %>% 
+  unnest_tokens(sentence, text, token = "sentences")
+p_and_p_sentences$sentence[2]
+
+```
+
+### Split the text of Jane Austen’s novels into a data frame by chapter.
+```{r}
+austen_chapters <- austen_books() %>%
+  group_by(book) %>%
+  unnest_tokens(chapter, text, token = "regex", 
+                pattern = "Chapter|CHAPTER [\\dIVXLC]") %>%
+  ungroup()
+
+austen_chapters %>% 
+  group_by(book) %>% 
+  summarise(chapters = n())
+```
+
+###  Number of negative words in each chapter and divide by the total words in each chapter
+```{r}
+bingnegative <- get_sentiments("bing") %>% 
+  filter(sentiment == "negative")
+
+wordcounts <- tidy_books %>%
+  group_by(book, chapter) %>%
+  summarize(words = n())
+
+tidy_books %>%
+  semi_join(bingnegative) %>%
+  group_by(book, chapter) %>%
+  summarize(negativewords = n()) %>%
+  left_join(wordcounts, by = c("book", "chapter")) %>%
+  mutate(ratio = negativewords/words) %>%
+  filter(chapter != 0) %>%
+  slice_max(ratio, n = 1) %>% 
+  ungroup()
+```
+
+##  **Code Extension**
+### I found an additional sentiment lexicon in https://bookdown.org/psonkin18/berkshire/sentiment.html (chapter 4.7) called **loughran**.I am using the hotels_review dataset from https://data.world/datafiniti/hotel-reviews. The file was more than 100 Mb and I couldn't upload it on github, so I removed some of the columns and uploaded the modified file.
+```{r}
+hotels <- read.csv("https://raw.githubusercontent.com/NikoletaEm/607LABS/main/modified_hotels_reviews.csv")
+reviews<- hotels[,c(12,21)]
+```
+#### Let's start the sentiment analysis using **loughran**
+```{r}
+loughran_lexicon <- get_sentiments("loughran")
+
+tokenized_reviews <- reviews %>%   ### we tokenize the reviews
+  unnest_tokens(word, reviews.title)
+
+
+sentiment_scores <- tokenized_reviews %>% ### we join with the sentiment lexicon to get sentiment scores
+  inner_join(loughran_lexicon)
+
+head(sentiment_scores)
+```
+
+### The code below calculates the difference between the count of positive and negative sentiment words, giving us a sentiment score. Positive scores indicate a positive sentiment, negative scores indicate a negative sentiment and zero indicates a neutral sentiment.
+```{r}
+sentiment_analysis <- sentiment_scores %>%
+  group_by(name) %>%
+  summarise(sentiment_score = sum(sentiment == "positive") - sum(sentiment == "negative"))
+
+head(sentiment_analysis)
+```
+
+```{r}
+review_counts <- sentiment_scores %>%
+  count(sentiment)
+
+ggplot(review_counts, aes(x = sentiment, y = n, fill = sentiment)) +
+  geom_bar(stat = "identity", width = 0.5) +
+  labs(title = "Distribution of Positive and Negative Reviews",
+       x = "Sentiment",
+       y = "Count") +
+  scale_fill_manual(values = c("positive" = "skyblue", "negative" = "salmon")) +
+  theme_minimal()
+```
+
+### As we see from the plot the positive reviews outnumber the negative ones , which means that the majority of the hotels was good.
+
+```{r}
+best_hotel <- sentiment_analysis[which.max(sentiment_analysis$sentiment_score), ]
+best_hotel
+```
+### The hotel with the **most positive points** (highest sentiment_score) turns out to be Hyatt House Seattle/Downtown!
