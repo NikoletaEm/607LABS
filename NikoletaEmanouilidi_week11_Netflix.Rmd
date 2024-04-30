@@ -5,29 +5,35 @@ date: "2024-04-04"
 output: html_document
 ---
 
-```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
-```
 
 # **NETFLIX**
 
 ## **Quick introduction**
 
-### Netflix is one of the most famous streaming services (that require subscription) and uses recommendation systems. Actually, it's very ### interesting that 75% of Netflix viewing is influenced by recommendations.Also, Netflix's dedication to offering optimal user         ### experiences led them to organize data science competitions known as the Netflix Prize, where participants competed to develop the most ### precise movie recommendation algorithms, with the winner receiving a $1,000,000 prize.
+### Netflix is one of the most famous streaming services (that require subscription) and uses recommendation systems. Actually, it's very  interesting that 75% of Netflix
+viewing is influenced by recommendations.Also, Netflix's dedication to offering optimal user experiences led them to organize data science competitions known as the Netflix Prize, 
+where participants competed to develop the most precise movie recommendation algorithms, with the winner receiving a $1,000,000 prize.
 
 ## **1⤵** 
 ###  Perform a Scenario Design analysis as described below.  Consider whether it makes sense for your selected recommender system to perform scenario design twice, once for the organization (e.g. Amazon.com) and once for the organization's customers.
 
 ### It does make sense for Netflix to perform scenario analysis twice,once for the organization (Netflix) and once for the organization's customers (Viewers or Netflix subscribers).
 
-### Scenario analysis for *Netflix (organization)*. ➼ Who  are your target users? Data scientists ,engineers, business analysts and        ### strategists. ➼ What are their key goals? Optimize content recommendation algorithms to improve user engagement and drive platform    ### growth. ➼ How can you help them accomplish those goals? Develop recommendation algorithms using advanced machine learning techniques, ### incorporating user feedback and continuously analyze and evaluate the performance of recommendation models using metrics like ratings, ### watch time and user satisfaction scores.
+### Scenario analysis for *Netflix (organization)*. 
+➼ Who  are your target users? Data scientists ,engineers, business analysts and strategists.
+➼ What are their key goals? Optimize content recommendation algorithms to improve user engagement and drive platform growth. 
+➼ How can you help them accomplish those goals? Develop recommendation algorithms using advanced machine learning techniques,incorporating user feedback and continuously analyze and evaluate the performance of recommendation models using metrics like ratings, watch time and user satisfaction scores.
 
-### Scenario analysis for *Netflix viewers*.  ➼ Who  are your target users? Netflix subscribers or viewers.➼ What are their key goals?   ### Find entertaining content to watch and discover new titles aligned with personal preferences.➼ How can you help them accomplish those ### goals? Provide personalized user profiles to accommodate the different preferences of household members, allow users to provide      ### feedback on recommended titles, such as thumbs-up or thumps-down signals in order to improve the accuracy of future recommendations and ### ensure a consistent and high-quality viewing experience across various devices and platforms.
+### Scenario analysis for *Netflix viewers*.  
+➼ Who  are your target users? Netflix subscribers or viewers.
+➼ What are their key goals?    Find entertaining content to watch and discover new titles aligned with personal preferences.
+➼ How can you help them accomplish those goals? Provide personalized user profiles to accommodate the different preferences of household members, allow users to provide feedback on recommended titles,
+such as thumbs-up or thumps-down signals in order to improve the accuracy of future recommendations and ensure a consistent and high-quality viewing experience across various devices and platforms.
 
 ## **2⤵**
-### Attempt to **reverse engineer** what you can about the site, from the site interface and any available information that you can find on ### the Internet or elsewhere.
+### Attempt to **reverse engineer** what you can about the site, from the site interface and any available information that you can find on  the Internet or elsewhere.
 
-### Starting of from the homepage. Netflix's homepage  displays rows of personalized recommendations tailored to each user's viewing     ### history, preferences, and interactions.These recommendations cover various genres, trending titles, new releases, and suggested      ### categories based on past activity.Also,Netflix provides a feature called "Continue Watching", which is a dedicated row that showcases  ###  titles that users have partially watched, allowing them to easily resume playback from where they left off. Besides "Continue       ### Watching" it offers an other interesting feature called "Top Picks For You", which suggests content based on a combination of factors ### such as viewing history, ratings, and similar titles liked by other users with similar tastes.In 2017 Netflix updated the old 5-star ### rating system with a new one, the thumbs-up/down system now users can rate titles with thumbs-up or thumbs-down feedback, improving the ### accuracy of the recommendation algorithm. That system being simpler than the old one resulted in doubling the number of ratings      ### recieved. Also, another offering of Netflix is "Genres and Categories".So Netflix categorizes content into genres, subgenres, and    ### collections, allowing users to explore specific interests or discover new titles within familiar themes. Lastly,in 2021 the "I feel  ### lucky" button was added to Netflix.The "I Feel Lucky" button represents an innovative approach to content discovery, aiming to provide ### users with instant satisfaction by quickly playing a movie or show that aligns with their preferences without the need for manual    ### browsing. This feature utilizes Netflix's recommendation algorithms to make real-time predictions about the user's preferences,      ### delivering personalized viewing experience. While initially introduced in a joking manner by Reed Hastings, the "I Feel Lucky" button ### underscores Netflix's commitment to innovation and experimentation in enhancing the user experience and pushing the boundaries of    ### personalized content recommendation.
+### Starting of from the homepage. Netflix's homepage  displays rows of personalized recommendations tailored to each user's viewing history, preferences, and interactions.These recommendations cover various genres, trending titles, new releases, and suggested categories based on past activity.Also,Netflix provides a feature called "Continue Watching", which is a dedicated row that showcases titles that users have partially watched, allowing them to easily resume playback from where they left off. Besides "Continue Watching" it offers an other interesting feature called "Top Picks For You", which suggests content based on a combination of factors  such as viewing history, ratings, and similar titles liked by other users with similar tastes.In 2017 Netflix updated the old 5-star rating system with a new one, the thumbs-up/down system now users can rate titles with thumbs-up or thumbs-down feedback, improving the accuracy of the recommendation algorithm. That system being simpler than the old one resulted in doubling the number of ratings recieved. Also, another offering of Netflix is "Genres and Categories".So Netflix categorizes content into genres, subgenres, and collections, allowing users to explore specific interests or discover new titles within familiar themes. Lastly,in 2021 the "I feel lucky" button was added to Netflix.The "I Feel Lucky" button represents an innovative approach to content discovery, aiming to provide users with instant satisfaction by quickly playing a movie or show that aligns with their preferences without the need for manual browsing. This feature utilizes Netflix's recommendation algorithms to make real-time predictions about the user's preferences, delivering personalized viewing experience. While initially introduced in a joking manner by Reed Hastings, the "I Feel Lucky" button underscores Netflix's commitment to innovation and experimentation in enhancing the user experience and pushing the boundaries of personalized content recommendation.
 
 ## **3⤵**
 ### Include specific recommendations about how to improve the site's recommendation capabilities going forward. 
@@ -38,7 +44,10 @@ knitr::opts_chunk$set(echo = TRUE)
 
 ## **Conclusion**
 
-### In conclusion, Netflix's recommendation system is key to its success, offering personalized suggestions based on user preferences. By ### using advanced algorithms and listening to user feedback, Netflix improves its recommendations. Features like the "I Feel Lucky" button ### show Netflix's commitment to making content discovery easy and enjoyable. In the future, by continuously improving it's site's       ### recommendation capabilities, Netflix can further elevate its recommendation system, ensuring that users find content they love and   ### enhancing overall satisfaction and engagement with the platform.
+### In conclusion, Netflix's recommendation system is key to its success, offering personalized suggestions based on user preferences. By using advanced algorithms and listening to user feedback, 
+Netflix improves its recommendations. Features like the "I Feel Lucky" button show Netflix's commitment to making content discovery easy and enjoyable. In the future, by continuously 
+improving it's site's recommendation capabilities, Netflix can further elevate its recommendation system, ensuring that users find content they love and enhancing overall satisfaction and 
+engagement with the platform.
 
 ## **References***
 
