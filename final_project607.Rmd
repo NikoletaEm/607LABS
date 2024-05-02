@@ -1,0 +1,204 @@
+---
+title: "Final Project data 607"
+author: "Nikoleta N Emanouilidi"
+date: "2024-04-11"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+```{r,message=FALSE }
+library(dplyr)
+library(ggplot2)
+library(tidyr)
+library(shiny)
+library(DT)
+library(jsonlite)
+library(httr)
+```
+
+## **Introduction**
+
+### Strokes, also known as cerebrovascular accidents (CVAs), are a significant global health concern, ranking among the leading causes of disability and mortality worldwide. These events occur when the blood supply to a part of the brain is interrupted or reduced, resulting in damage or death of brain cells due to oxygen and nutrient deprivation. Ischemic strokes, caused by arterial blockages, and hemorrhagic strokes, resulting from blood vessel ruptures, represent the two primary types of strokes. Understanding the risk factors, which include hypertension, diabetes, smoking, and obesity, is essential for prevention. Lifestyle modifications such as maintaining a healthy diet, regular exercise and managing chronic conditions can mitigate these risks. Furthermore, early recognition of stroke symptoms and access to timely medical intervention are crucial for minimizing brain damage and improving outcomes for stroke survivors. Through a comprehensive understanding of strokes, including their causes, risk factors, prevention strategies, and management approaches, healthcare professionals can play a pivotal role in reducing the burden of this debilitating condition.
+
+### For this project, I intend to develop a Shiny app that calculates the probability of an individual experiencing a stroke and then visualize the states with the higher prercentages of deaths by strokes.
+```{r}
+strokes<-read.csv("https://raw.githubusercontent.com/NikoletaEm/607LABS/main/healthcare-dataset-stroke-data.csv")
+```
+
+## **Data preprocessing**
+
+### First I'll convert categorical variables (gender, ever_married, work_type, Residence_type, and smoking_status) into factors to prepare them for modeling.The target variable is renamed to "had_stroke" for clarity and the missing values in the bmi column are imputed with the mean.Then I'll split the dataset into training and testing sets using an 80-20 split ratio.Finally, the preprocessed training and testing datasets will be saved to a file for future use.
+
+```{r,message=FALSE}
+strokes$gender <- as.factor(strokes$gender)
+strokes$ever_married <- as.factor(strokes$ever_married)
+strokes$work_type <- as.factor(strokes$work_type)
+strokes$Residence_type <- as.factor(strokes$Residence_type)
+strokes$smoking_status <- as.factor(strokes$smoking_status)
+
+
+
+strokes$bmi[is.na(strokes$bmi)] <- mean(strokes$bmi, na.rm = TRUE) ### Handle missing values
+
+# Split the dataset into training and testing sets
+set.seed(2601)
+train_index <- sample(1:nrow(strokes), 0.8 * nrow(strokes))
+train_data <- strokes[train_index, ]
+test_data <- strokes[-train_index, ]
+
+
+save(train_data, test_data, file = "preprocessed_stroke_data.RData")
+```
+
+## **Model training**
+### I'll train a predictive model to understand the relationship between various factors (like age, gender, hypertension, etc.) and the occurrence of strokes. The model is fitted using training data (train_data), and it uses logistic regression, which is a statistical method suitable for predicting binary outcomes in our case, whether a stroke occurred or not. I'll round the bmi values in the train_data dataset because it'll affect the following code blocks.
+```{r}
+train_data$bmi <- as.numeric(train_data$bmi)
+train_data$bmi <- floor(train_data$bmi) # Round the bmi values
+
+model <- glm(stroke ~ ., data = train_data[, -1], family = "binomial")
+```
+
+### I'll convert the bmi column to numeric format using as.numeric() and then apply the round() function.
+```{r}
+test_data$bmi <- as.numeric(test_data$bmi)
+mean_bmi <- mean(test_data$bmi, na.rm = TRUE)
+test_data$bmi[is.na(test_data$bmi)] <- mean_bmi
+test_data$bmi <- floor(test_data$bmi)
+```
+
+### The presence of a single "Other" response in the gender column of the test_data set was causing issues with the code.This inconsistency arose because the model was trained on the train_data set, which lacked the "Other" category in the gender column. Thus, by removing the "Other" response from the test_data set, we ensured consistency in the categories between the training and testing data, enabling the model to make accurate predictions without encountering unexpected data points.
+
+```{r}
+test_data <- test_data[test_data$gender != "Other", ]
+```
+
+## **Model Evaluation**
+
+### Moving to model evaluation. The code bellow it initially  generates predictions for the test dataset using the fitted model, converting predicted probabilities into binary classes where probabilities above 0.5 are classified as 1,indicating a positive outcome, and the rest as 0 ,negative outcome.  Next, it retrieves the actual class labels from the test dataset. Finally, it calculates the accuracy of the model's predictions by comparing the predicted classes with the actual classes and computing the proportion of correct predictions, assigning the result to the variable 'accuracy'.
+
+```{r}
+predictions <- predict(model, newdata = test_data[, -c(1, 12)], type = "response")
+predicted_classes <- ifelse(predictions > 0.5, 1, 0)
+actual_classes <- test_data$stroke
+
+accuracy <- mean(predicted_classes == actual_classes)
+```
+
+
+
+## **Shinny App**
+
+### The following code generates a Shinny app. Once the user enters their information and clicks the "Predict" button, the server logic retrieves the input data, preprocesses it to ensure it matches the format expected by the trained model, and then uses the trained model to predict the probability of stroke for the provided information
+
+```{r}
+
+load("preprocessed_stroke_data.RData")  ### loading preprocessed data and a trained model
+
+# Define UI for application
+ui <- fluidPage(
+  titlePanel("Stroke Risk Prediction"),
+  sidebarLayout(
+    sidebarPanel(
+      numericInput("age", "Age:", value = 50), ### numeric input field
+      selectInput("gender", "Gender:", c("Male", "Female")),
+      numericInput("hypertension", "Hypertension (0/1):", value = 0, min = 0, max = 1),
+      numericInput("heart_disease", "Heart Disease (0/1):", value = 0, min = 0, max = 1),
+      selectInput("ever_married", "Ever Married:", c("Yes", "No")),
+      selectInput("work_type", "Work Type:", c("Private", "Self-employed", "Govt_job", "children", "Never_worked")),
+      selectInput("Residence_type", "Residence Type:", c("Urban", "Rural")),
+      numericInput("avg_glucose_level", "Avg Glucose Level:", value = 100),
+      numericInput("bmi", "BMI:", value = 25),
+      selectInput("smoking_status", "Smoking Status:", c("never smoked", "formerly smoked", "smokes", "Unknown")),
+      actionButton("predictButton", "Predict"), ### trigger the prediction
+    ),
+    mainPanel(
+      textOutput("prediction")
+    )
+  )
+)
+
+# Define server logic
+server <- function(input, output) {
+  observeEvent(input$predictButton, {
+    # Prepare input data for prediction
+    new_data <- data.frame(
+  age = input$age,
+  gender = input$gender,
+  hypertension = input$hypertension,
+  heart_disease = input$heart_disease,
+  ever_married = input$ever_married,
+  work_type = input$work_type,
+  Residence_type = input$Residence_type,
+  avg_glucose_level = input$avg_glucose_level,
+  bmi = as.numeric(input$bmi), # Ensure 'bmi' is numeric
+  smoking_status = input$smoking_status
+)
+    
+    # Perform prediction using the trained model
+    prediction <- predict(model, newdata = new_data, type = "response")
+    
+    # Display prediction
+    output$prediction <- renderText({
+      paste("Probability of stroke:", round(prediction * 100, 2), "%")
+    })
+  })
+}
+
+# Run the app
+shinyApp(ui = ui, server = server)
+```
+
+## **Visualization of deaths from stroke**
+
+### I found a JSON file on the CDC data website and read the JSON into a dataframe.
+
+```{r,message=FALSE}
+
+# API endpoint URL
+url <- "https://data.cdc.gov/resource/kpwh-eddm.json"
+
+# Read JSON data
+deaths_bystroke <- fromJSON(url)
+
+head(deaths_bystroke)
+```
+### Renaming some of the columns I'll use  for the  visualization.
+```{r}
+deaths_bystroke<-rename(deaths_bystroke,State=locationabbr,
+                                        County=locationdesc,
+                                        Geographical_type=geographiclevel)
+
+```
+
+### Plot
+```{r}
+state_death_percentages <- prop.table(table(deaths_bystroke$State)) * 100
+
+state_death_percentages <- data.frame(State = names(state_death_percentages), Percentage = as.numeric(state_death_percentages)) ### we convert the result to a dataframe for easier plotting.
+
+ggplot(state_death_percentages, aes(x = State, y = Percentage)) +
+  geom_bar(stat = "identity", fill = "skyblue") +
+  geom_text(aes(label = paste0(round(Percentage, 1), "%")), vjust = -0.5, size = 3) +  # Add text labels for percentages
+  labs(x = "State", y = "Percentage of Deaths", title = "Percentage of Deaths by State ") +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1)) 
+```
+
+### As we see above, Alabama stands out as the primary contributor, accounting for 58.2% of stroke-related deaths, indicating a considerable concentration of stroke mortality within the state. Alaska itself closely follows, with 40.5% of stroke-related deaths occurring within its boundaries. Conversely, Arizona, Arkansas, Connecticut, and Delaware collectively contribute only minimal percentages, ranging from 0.1% to 0.7%. This distribution underscores pronounced regional disparities in stroke mortality, with a substantial proportion of deaths concentrated in Alabama and Alaska.
+
+## **Conclusion**
+### In conclusion, strokes pose a significant global health challenge, contributing substantially to disability and mortality rates worldwide. Through a deeper understanding of their causes, risk factors, and preventive measures, healthcare professionals can play a crucial role in reducing the incidence and severity of strokes. The integration of lifestyle modifications, early recognition of symptoms, and timely medical intervention are paramount in mitigating the impact of strokes on individuals and communities. By leveraging advancements in research and technology, such as the development of predictive tools like the Shiny app proposed in my project, we can enhance risk assessment and improve patient outcomes.
+
+## **References**
+#### https://www.cdc.gov/stroke/about.htm
+#### https://dev.socrata.com/foundry/data.cdc.gov/kpwh-eddm
+#### https://www.gwhospital.com/conditions-services/neurosciences-institute/understanding-stroke
+
+### Shiny app reading:
+#### https://mastering-shiny.org/basic-app.html
+#### https://ourcodingclub.github.io/tutorials/shiny/
+### https://learning.nceas.ucsb.edu/2020-02-RRCourse/introduction-to-shiny.html
+### and a bunch of YouTube videos
